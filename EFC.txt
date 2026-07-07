@@ -1,3 +1,44 @@
+Stucture{
+
+Microsoft.EntityFrameworkCore.SqlServer
+Microsoft.EntityFrameworkCore.Tools
+Microsoft.EntityFrameworkCore.Design
+Microsoft.VisualStudio.Web.CodeGeneration.Design
+
+public class ClassName
+    {
+        [Key]
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Gender { get; set; }
+    }
+
+
+ public class NameDBContext :DbContext
+ {
+     public NameDBContext(DbContextOptions<NameDBContext> options) : base(options)
+     { 
+ }
+     public DbSet<ModelClassName> AnyName { get; set; }
+ }
+
+
+"ConnectionStrings": {
+  "dbcs": "Server=ChangeHere\\SQLEXPRESS;Database=Mydb;Trusted_Connection=True;TrustServerCertificate=True;",
+},
+
+
+builder.Services.AddDbContext<NameDBContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("dbcs")));
+
+
+Add-Migration firstTime
+Update-Database
+
+}
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+
 using System.ComponentModel.DataAnnotations;
 
 namespace WebApplication7.Models
