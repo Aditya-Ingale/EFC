@@ -1,0 +1,463 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace WebApplication7.Models
+{
+    public class Employee
+    {
+        [Key]
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Gender { get; set; }
+    }
+}
+
+
+using Microsoft.EntityFrameworkCore;
+
+namespace WebApplication7.Models
+{
+    public class StudentDBContext : Microsoft.EntityFrameworkCore.DbContext
+    {
+        public StudentDBContext(DbContextOptions options) : base(options) 
+        {
+            
+        }
+
+        public DbSet<Employee> Employees { get; set; }
+    }
+}
+
+
+  "ConnectionStrings": {
+    "db": "Server=LAPTOP-E6CT8OQ0\\SQLEXPRESS;Database=EmployeeDB1;Trusted_Connection=True;TrustServerCertificate=True",
+    "StudentDBContext": "Server=(localdb)\\mssqllocaldb;Database=StudentDBContext;Trusted_Connection=True;MultipleActiveResultSets=true"
+  },
+	
+
+builder.Services.AddDbContext<StudentDBContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("db")));
+
+
+
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using WebApplication7.Models;
+
+public class EmployeeController : Controller
+{
+    private readonly StudentDBContext _context;
+
+    public EmployeeController(StudentDBContext context)
+    {
+        _context = context;
+    }
+
+    // GET: EMPLOYEES
+    public async Task<IActionResult> Index()    
+    {
+        return View(await _context.Employees.ToListAsync());
+    }
+
+    // GET: EMPLOYEES/Details/5
+    public async Task<IActionResult> Details(int? id)
+    {
+        if (id == null)
+        {
+            return NotFound();
+        }
+
+        var employee = await _context.Employees
+            .FirstOrDefaultAsync(m => m.Id == id);
+        if (employee == null)
+        {
+            return NotFound();
+        }
+
+        return View(employee);
+    }
+
+    // GET: EMPLOYEES/Create
+    public IActionResult Create()
+    {
+        return View();
+    }
+
+    // POST: EMPLOYEES/Create
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create([Bind("Id,Name,Gender")] Employee employee)
+    {
+        if (ModelState.IsValid)
+        {
+            _context.Add(employee);
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
+        return View(employee);
+    }
+
+    // GET: EMPLOYEES/Edit/5
+    public async Task<IActionResult> Edit(int? id)
+    {
+        if (id == null)
+        {
+            return NotFound();
+        }
+
+        var employee = await _context.Employees.FindAsync(id);
+        if (employee == null)
+        {
+            return NotFound();
+        }
+        return View(employee);
+    }
+
+    // POST: EMPLOYEES/Edit/5
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int? id, [Bind("Id,Name,Gender")] Employee employee)
+    {
+        if (id != employee.Id)
+        {
+            return NotFound();
+        }
+
+        if (ModelState.IsValid)
+        {
+            try
+            {
+                _context.Update(employee);
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!EmployeeExists(employee.Id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            return RedirectToAction(nameof(Index));
+        }
+        return View(employee);
+    }
+
+    // GET: EMPLOYEES/Delete/5
+    public async Task<IActionResult> Delete(int? id)
+    {
+        if (id == null)
+        {
+            return NotFound();
+        }
+
+        var employee = await _context.Employees
+            .FirstOrDefaultAsync(m => m.Id == id);
+        if (employee == null)
+        {
+            return NotFound();
+        }
+
+        return View(employee);
+    }
+
+    // POST: EMPLOYEES/Delete/5
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(int? id)
+    {
+        var employee = await _context.Employees.FindAsync(id);
+        if (employee != null)
+        {
+            _context.Employees.Remove(employee);
+        }
+
+        await _context.SaveChangesAsync();
+        return RedirectToAction(nameof(Index));
+    }
+
+    private bool EmployeeExists(int? id)
+    {
+        return _context.Employees.Any(e => e.Id == id);
+    }
+}
+
+
+@model WebApplication7.Models.Employee
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create</h1>
+
+<h4>Employee</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="form-group">
+                <label asp-for="Name" class="control-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Gender" class="control-label"></label>
+                <input asp-for="Gender" class="form-control" />
+                <span asp-validation-for="Gender" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+
+@model WebApplication7.Models.Employee
+
+@{
+    ViewData["Title"] = "Delete";
+}
+
+<h1>Delete</h1>
+
+<h3>Are you sure you want to delete this?</h3>
+<div>
+    <h4>WebApplication7.Models.Employee</h4>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Name)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Name)
+        </dd>
+    </dl>
+    <dl class="row">
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Gender)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Gender)
+        </dd>
+    </dl>
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="Id" />
+        <input type="submit" value="Delete" class="btn btn-danger" /> |
+        <a asp-action="Index">Back to List</a>
+    </form>
+</div>
+
+
+
+@model WebApplication7.Models.Employee
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h1>Details</h1>
+
+<div>
+    <h4>Employee</h4>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Name)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Name)
+        </dd>
+    </dl>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Gender)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Gender)
+        </dd>
+    </dl>
+</div>
+<div>
+    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
+    <a asp-action="Index">Back to List</a>
+</div>
+
+
+@model WebApplication7.Models.Employee
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Edit</h1>
+
+<h4>Employee</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            <div class="form-group">
+                <label asp-for="Name" class="control-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Gender" class="control-label"></label>
+                <input asp-for="Gender" class="form-control" />
+                <span asp-validation-for="Gender" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+
+
+@model IEnumerable<WebApplication7.Models.Employee>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Name)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Gender)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(model => item.Name)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.Gender)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+using System.Data.SqlClient;
+using System.Collections.Generic;
+
+namespace StudentCRUD.Models
+{
+    public class DBHelper
+    {
+        static string cs = @"Data Source=.;Initial Catalog=TestDB;Integrated Security=True";
+
+        public static List<Student> GetAll()
+        {
+            var list = new List<Student>();
+            using (SqlConnection con = new SqlConnection(cs))
+            {
+                SqlCommand cmd = new SqlCommand("SELECT * FROM Students", con);
+                con.Open();
+                SqlDataReader dr = cmd.ExecuteReader();
+                while (dr.Read())
+                    list.Add(new Student { Id = (int)dr["Id"], Name = dr["Name"].ToString(), Age = (int)dr["Age"] });
+            }
+            return list;
+        }
+
+        public static Student GetById(int id)
+        {
+            using (SqlConnection con = new SqlConnection(cs))
+            {
+                SqlCommand cmd = new SqlCommand("SELECT * FROM Students WHERE Id=@id", con);
+                cmd.Parameters.AddWithValue("@id", id);
+                con.Open();
+                SqlDataReader dr = cmd.ExecuteReader();
+                if (dr.Read())
+                    return new Student { Id = (int)dr["Id"], Name = dr["Name"].ToString(), Age = (int)dr["Age"] };
+            }
+            return null;
+        }
+
+        public static void Insert(Student s)
+        {
+            using (SqlConnection con = new SqlConnection(cs))
+            {
+                SqlCommand cmd = new SqlCommand("INSERT INTO Students(Name, Age) VALUES(@n,@a)", con);
+                cmd.Parameters.AddWithValue("@n", s.Name);
+                cmd.Parameters.AddWithValue("@a", s.Age);
+                con.Open();
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        public static void Update(Student s)
+        {
+            using (SqlConnection con = new SqlConnection(cs))
+            {
+                SqlCommand cmd = new SqlCommand("UPDATE Students SET Name=@n, Age=@a WHERE Id=@id", con);
+                cmd.Parameters.AddWithValue("@n", s.Name);
+                cmd.Parameters.AddWithValue("@a", s.Age);
+                cmd.Parameters.AddWithValue("@id", s.Id);
+                con.Open();
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        public static void Delete(int id)
+        {
+            using (SqlConnection con = new SqlConnection(cs))
+            {
+                SqlCommand cmd = new SqlCommand("DELETE FROM Students WHERE Id=@id", con);
+                cmd.Parameters.AddWithValue("@id", id);
+                con.Open();
+                cmd.ExecuteNonQuery();
+            }
+        }
+    }
+}
+
