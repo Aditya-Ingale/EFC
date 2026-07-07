@@ -502,3 +502,450 @@ namespace StudentCRUD.Models
     }
 }
 
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// ==========================================================================
+// Assignment 4 - Question 1: Implementing a News Feed Application
+// Demonstrates the use of delegates and events in C#.
+//
+// - NewsArticle: represents a single news article
+// - NewsArticleCollection: represents a collection of news articles,
+//   raises events when articles are added or removed, and supports
+//   filtering articles by category
+// - Program: console app that subscribes to the events and exercises
+//   the collection
+//
+// To run (requires .NET SDK):
+//   dotnet run --project Task1_NewsFeedApp.csproj
+// ==========================================================================
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace NewsFeedApp
+{
+    /// <summary>
+    /// Represents a single news article.
+    /// </summary>
+    public class NewsArticle
+    {
+        public int Id { get; set; }
+        public string Title { get; set; }
+        public string Content { get; set; }
+        public string Category { get; set; }
+        public DateTime PublishedDate { get; set; }
+
+        public NewsArticle(int id, string title, string content, string category, DateTime publishedDate)
+        {
+            Id = id;
+            Title = title;
+            Content = content;
+            Category = category;
+            PublishedDate = publishedDate;
+        }
+
+        public override string ToString()
+        {
+            return $"[{Id}] ({Category}) \"{Title}\" - published {PublishedDate:d}";
+        }
+    }
+
+    // Delegate that defines the signature for article add/remove event handlers.
+    public delegate void ArticleChangedEventHandler(object sender, ArticleChangedEventArgs e);
+
+    /// <summary>
+    /// Custom event args carrying information about the article that changed
+    /// and the type of change that occurred.
+    /// </summary>
+    public class ArticleChangedEventArgs : EventArgs
+    {
+        public NewsArticle Article { get; }
+        public string ChangeType { get; } // "Added" or "Removed"
+
+        public ArticleChangedEventArgs(NewsArticle article, string changeType)
+        {
+            Article = article;
+            ChangeType = changeType;
+        }
+    }
+
+    /// <summary>
+    /// Represents a collection of news articles. Raises events whenever
+    /// an article is added to or removed from the collection, and allows
+    /// subscribers (e.g. the console app) to react - for example, by
+    /// notifying the user.
+    /// </summary>
+    public class NewsArticleCollection
+    {
+        private readonly List<NewsArticle> _articles = new List<NewsArticle>();
+
+        // Events that other parts of the application can subscribe to.
+        public event ArticleChangedEventHandler ArticleAdded;
+        public event ArticleChangedEventHandler ArticleRemoved;
+
+        public int Count => _articles.Count;
+
+        public void AddArticle(NewsArticle article)
+        {
+            if (article == null) throw new ArgumentNullException(nameof(article));
+
+            _articles.Add(article);
+
+            // Raise the ArticleAdded event, notifying all subscribers.
+            OnArticleAdded(new ArticleChangedEventArgs(article, "Added"));
+        }
+
+        public bool RemoveArticle(int articleId)
+        {
+            NewsArticle article = _articles.FirstOrDefault(a => a.Id == articleId);
+            if (article == null)
+            {
+                return false;
+            }
+
+            _articles.Remove(article);
+
+            // Raise the ArticleRemoved event, notifying all subscribers.
+            OnArticleRemoved(new ArticleChangedEventArgs(article, "Removed"));
+            return true;
+        }
+
+        /// <summary>
+        /// Returns all articles that belong to the given category
+        /// (case-insensitive match).
+        /// </summary>
+        public IEnumerable<NewsArticle> FilterByCategory(string category)
+        {
+            return _articles
+                .Where(a => string.Equals(a.Category, category, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(a => a.PublishedDate);
+        }
+
+        public IEnumerable<NewsArticle> GetAllArticles()
+        {
+            return _articles.OrderByDescending(a => a.PublishedDate);
+        }
+
+        // Protected "on" methods - standard .NET pattern for raising events.
+        protected virtual void OnArticleAdded(ArticleChangedEventArgs e)
+        {
+            ArticleAdded?.Invoke(this, e);
+        }
+
+        protected virtual void OnArticleRemoved(ArticleChangedEventArgs e)
+        {
+            ArticleRemoved?.Invoke(this, e);
+        }
+    }
+
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            var feed = new NewsArticleCollection();
+
+            // Subscribe to the events using delegates - the event handlers
+            // below simply print a notification to the console, but any
+            // subscriber logic (logging, email alerts, UI refresh, etc.)
+            // could go here instead.
+            feed.ArticleAdded += Feed_ArticleAdded;
+            feed.ArticleRemoved += Feed_ArticleRemoved;
+
+            Console.WriteLine("=== Adding articles to the news feed ===\n");
+
+            feed.AddArticle(new NewsArticle(1, "Local Team Wins Championship", "...", "Sports", new DateTime(2024, 3, 1)));
+            feed.AddArticle(new NewsArticle(2, "New Smartphone Released", "...", "Technology", new DateTime(2024, 3, 3)));
+            feed.AddArticle(new NewsArticle(3, "Stock Market Rallies", "...", "Business", new DateTime(2024, 3, 4)));
+            feed.AddArticle(new NewsArticle(4, "City Council Passes New Budget", "...", "Politics", new DateTime(2024, 3, 5)));
+            feed.AddArticle(new NewsArticle(5, "AI Breakthrough Announced", "...", "Technology", new DateTime(2024, 3, 6)));
+
+            Console.WriteLine($"\nTotal articles in feed: {feed.Count}");
+
+            Console.WriteLine("\n=== Filtering articles by category: Technology ===\n");
+            foreach (var article in feed.FilterByCategory("Technology"))
+            {
+                Console.WriteLine(article);
+            }
+
+            Console.WriteLine("\n=== Removing an article ===\n");
+            feed.RemoveArticle(3);
+
+            Console.WriteLine($"\nTotal articles in feed: {feed.Count}");
+
+            Console.WriteLine("\n=== All remaining articles ===\n");
+            foreach (var article in feed.GetAllArticles())
+            {
+                Console.WriteLine(article);
+            }
+
+            Console.WriteLine("\nDone. Press any key to exit.");
+        }
+
+        // Event handler methods matching the ArticleChangedEventHandler delegate signature.
+        private static void Feed_ArticleAdded(object sender, ArticleChangedEventArgs e)
+        {
+            Console.WriteLine($"[NOTIFICATION] New article added -> {e.Article}");
+        }
+
+        private static void Feed_ArticleRemoved(object sender, ArticleChangedEventArgs e)
+        {
+            Console.WriteLine($"[NOTIFICATION] Article removed -> {e.Article}");
+        }
+    }
+}
+
+
+
+
+// ==========================================================================
+// Assignment 4 - Question 2: Practicing LINQ queries in C#
+//
+// Classes: Customer, Product, Order, OrderDetail
+// Sample data: 5 customers, 15 products, 5 orders, 10 order details
+//
+// LINQ queries performed:
+//   b) All customers in alphabetical order by last name
+//   c) All products ordered by unit price, highest to lowest
+//   d) All orders shipped in October 2021
+//   e) All orders shipped to customers in the USA
+//   f) All products ordered at least once, with total quantity ordered
+//      and total revenue generated
+//   g) Top 5 customers by total amount spent, with number of orders
+//      placed and average order amount
+//   h) The most popular product by number of times it has been ordered
+//
+// To run (requires .NET SDK):
+//   dotnet run --project Task2_LinqQueries.csproj
+// ==========================================================================
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace LinqQueriesApp
+{
+    public class Customer
+    {
+        public int CustomerId { get; set; }
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+        public string Country { get; set; }
+
+        public string FullName => $"{FirstName} {LastName}";
+    }
+
+    public class Product
+    {
+        public int ProductId { get; set; }
+        public string ProductName { get; set; }
+        public decimal UnitPrice { get; set; }
+    }
+
+    public class Order
+    {
+        public int OrderId { get; set; }
+        public int CustomerId { get; set; }
+        public DateTime OrderDate { get; set; }
+        public DateTime? ShippedDate { get; set; }
+    }
+
+    public class OrderDetail
+    {
+        public int OrderDetailId { get; set; }
+        public int OrderId { get; set; }
+        public int ProductId { get; set; }
+        public int Quantity { get; set; }
+        public decimal UnitPrice { get; set; }
+    }
+
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            // ------------------------------------------------------------------
+            // Sample data
+            // ------------------------------------------------------------------
+
+            var customers = new List<Customer>
+            {
+                new Customer { CustomerId = 1, FirstName = "John",  LastName = "Smith",    Country = "USA" },
+                new Customer { CustomerId = 2, FirstName = "Maria", LastName = "Garcia",   Country = "Spain" },
+                new Customer { CustomerId = 3, FirstName = "Amit",  LastName = "Sharma",   Country = "India" },
+                new Customer { CustomerId = 4, FirstName = "Emily", LastName = "Anderson", Country = "USA" },
+                new Customer { CustomerId = 5, FirstName = "Liam",  LastName = "Brown",    Country = "Canada" },
+            };
+
+            var products = new List<Product>
+            {
+                new Product { ProductId = 1,  ProductName = "Wireless Mouse",        UnitPrice = 19.99m },
+                new Product { ProductId = 2,  ProductName = "Mechanical Keyboard",   UnitPrice = 59.99m },
+                new Product { ProductId = 3,  ProductName = "27-inch Monitor",       UnitPrice = 229.99m },
+                new Product { ProductId = 4,  ProductName = "USB-C Hub",             UnitPrice = 34.50m },
+                new Product { ProductId = 5,  ProductName = "Laptop Stand",          UnitPrice = 27.75m },
+                new Product { ProductId = 6,  ProductName = "Webcam 1080p",          UnitPrice = 45.00m },
+                new Product { ProductId = 7,  ProductName = "Noise Cancelling Headphones", UnitPrice = 149.99m },
+                new Product { ProductId = 8,  ProductName = "External SSD 1TB",      UnitPrice = 89.99m },
+                new Product { ProductId = 9,  ProductName = "Desk Lamp",             UnitPrice = 22.00m },
+                new Product { ProductId = 10, ProductName = "Bluetooth Speaker",     UnitPrice = 39.99m },
+                new Product { ProductId = 11, ProductName = "Graphics Tablet",       UnitPrice = 79.99m },
+                new Product { ProductId = 12, ProductName = "Office Chair",          UnitPrice = 199.99m },
+                new Product { ProductId = 13, ProductName = "Ring Light",            UnitPrice = 32.99m },
+                new Product { ProductId = 14, ProductName = "Portable Charger",      UnitPrice = 24.99m },
+                new Product { ProductId = 15, ProductName = "HDMI Cable 2m",         UnitPrice = 9.99m },
+            };
+
+            var orders = new List<Order>
+            {
+                new Order { OrderId = 1, CustomerId = 1, OrderDate = new DateTime(2021, 10, 2),  ShippedDate = new DateTime(2021, 10, 5)  },
+                new Order { OrderId = 2, CustomerId = 2, OrderDate = new DateTime(2021, 9, 20),   ShippedDate = new DateTime(2021, 9, 25)  },
+                new Order { OrderId = 3, CustomerId = 4, OrderDate = new DateTime(2021, 10, 10),  ShippedDate = new DateTime(2021, 10, 15) },
+                new Order { OrderId = 4, CustomerId = 1, OrderDate = new DateTime(2021, 11, 1),   ShippedDate = new DateTime(2021, 11, 4)  },
+                new Order { OrderId = 5, CustomerId = 3, OrderDate = new DateTime(2021, 10, 22),  ShippedDate = null },
+            };
+
+            var orderDetails = new List<OrderDetail>
+            {
+                new OrderDetail { OrderDetailId = 1,  OrderId = 1, ProductId = 1,  Quantity = 2, UnitPrice = 19.99m },
+                new OrderDetail { OrderDetailId = 2,  OrderId = 1, ProductId = 2,  Quantity = 1, UnitPrice = 59.99m },
+                new OrderDetail { OrderDetailId = 3,  OrderId = 2, ProductId = 3,  Quantity = 1, UnitPrice = 229.99m },
+                new OrderDetail { OrderDetailId = 4,  OrderId = 2, ProductId = 4,  Quantity = 3, UnitPrice = 34.50m },
+                new OrderDetail { OrderDetailId = 5,  OrderId = 3, ProductId = 1,  Quantity = 1, UnitPrice = 19.99m },
+                new OrderDetail { OrderDetailId = 6,  OrderId = 3, ProductId = 7,  Quantity = 1, UnitPrice = 149.99m },
+                new OrderDetail { OrderDetailId = 7,  OrderId = 4, ProductId = 8,  Quantity = 2, UnitPrice = 89.99m },
+                new OrderDetail { OrderDetailId = 8,  OrderId = 4, ProductId = 2,  Quantity = 1, UnitPrice = 59.99m },
+                new OrderDetail { OrderDetailId = 9,  OrderId = 5, ProductId = 1,  Quantity = 5, UnitPrice = 19.99m },
+                new OrderDetail { OrderDetailId = 10, OrderId = 5, ProductId = 12, Quantity = 1, UnitPrice = 199.99m },
+            };
+
+            // ------------------------------------------------------------------
+            // b) All customers, alphabetical by last name
+            // ------------------------------------------------------------------
+            Console.WriteLine("b) Customers in alphabetical order by last name");
+            Console.WriteLine("------------------------------------------------");
+            var customersByLastName = customers
+                .OrderBy(c => c.LastName)
+                .ToList();
+
+            foreach (var c in customersByLastName)
+                Console.WriteLine($"{c.LastName}, {c.FirstName} ({c.Country})");
+
+            // ------------------------------------------------------------------
+            // c) All products, by unit price, highest to lowest
+            // ------------------------------------------------------------------
+            Console.WriteLine("\nc) Products ordered by unit price (highest to lowest)");
+            Console.WriteLine("------------------------------------------------------");
+            var productsByPriceDesc = products
+                .OrderByDescending(p => p.UnitPrice)
+                .ToList();
+
+            foreach (var p in productsByPriceDesc)
+                Console.WriteLine($"{p.ProductName,-30} {p.UnitPrice:C}");
+
+            // ------------------------------------------------------------------
+            // d) All orders shipped in October 2021
+            // ------------------------------------------------------------------
+            Console.WriteLine("\nd) Orders shipped in October 2021");
+            Console.WriteLine("----------------------------------");
+            var ordersShippedOctober2021 = orders
+                .Where(o => o.ShippedDate.HasValue
+                         && o.ShippedDate.Value.Year == 2021
+                         && o.ShippedDate.Value.Month == 10)
+                .ToList();
+
+            foreach (var o in ordersShippedOctober2021)
+                Console.WriteLine($"Order #{o.OrderId} - shipped {o.ShippedDate:d}");
+
+            // ------------------------------------------------------------------
+            // e) All orders shipped to customers in the USA
+            // ------------------------------------------------------------------
+            Console.WriteLine("\ne) Orders shipped to customers in the USA");
+            Console.WriteLine("------------------------------------------");
+            var ordersToUsa =
+                from o in orders
+                join c in customers on o.CustomerId equals c.CustomerId
+                where c.Country == "USA"
+                select new { o.OrderId, Customer = c.FullName, o.ShippedDate };
+
+            foreach (var o in ordersToUsa)
+                Console.WriteLine($"Order #{o.OrderId} - {o.Customer} - shipped {(o.ShippedDate.HasValue ? o.ShippedDate.Value.ToShortDateString() : "not shipped yet")}");
+
+            // ------------------------------------------------------------------
+            // f) Products ordered at least once, with total quantity and
+            //    total revenue generated by each product
+            // ------------------------------------------------------------------
+            Console.WriteLine("\nf) Products ordered, with total quantity and total revenue");
+            Console.WriteLine("------------------------------------------------------------");
+            var productSales =
+                from od in orderDetails
+                group od by od.ProductId into g
+                join p in products on g.Key equals p.ProductId
+                select new
+                {
+                    ProductName = p.ProductName,
+                    TotalQuantity = g.Sum(x => x.Quantity),
+                    TotalRevenue = g.Sum(x => x.Quantity * x.UnitPrice)
+                };
+
+            foreach (var ps in productSales.OrderByDescending(x => x.TotalRevenue))
+                Console.WriteLine($"{ps.ProductName,-30} Qty: {ps.TotalQuantity,-5} Revenue: {ps.TotalRevenue:C}");
+
+            // ------------------------------------------------------------------
+            // g) Top 5 customers by total amount spent, with number of
+            //    orders placed and average order amount
+            // ------------------------------------------------------------------
+            Console.WriteLine("\ng) Top 5 customers by total amount spent");
+            Console.WriteLine("------------------------------------------");
+
+            // First compute the total amount of each individual order.
+            var orderTotals =
+                from o in orders
+                join od in orderDetails on o.OrderId equals od.OrderId
+                group od by o.OrderId into g
+                select new
+                {
+                    OrderId = g.Key,
+                    CustomerId = orders.First(o => o.OrderId == g.Key).CustomerId,
+                    OrderTotal = g.Sum(x => x.Quantity * x.UnitPrice)
+                };
+
+            var topCustomers =
+                from ot in orderTotals
+                group ot by ot.CustomerId into g
+                join c in customers on g.Key equals c.CustomerId
+                select new
+                {
+                    Customer = c.FullName,
+                    TotalSpent = g.Sum(x => x.OrderTotal),
+                    OrderCount = g.Count(),
+                    AverageOrderAmount = g.Average(x => x.OrderTotal)
+                } into result
+                orderby result.TotalSpent descending
+                select result;
+
+            foreach (var tc in topCustomers.Take(5))
+                Console.WriteLine($"{tc.Customer,-15} Total: {tc.TotalSpent,10:C}  Orders: {tc.OrderCount}  Avg/Order: {tc.AverageOrderAmount:C}");
+
+            // ------------------------------------------------------------------
+            // h) The most popular product by number of times it has
+            //    been ordered (i.e. appears in the most order details)
+            // ------------------------------------------------------------------
+            Console.WriteLine("\nh) Most popular product (by number of times ordered)");
+            Console.WriteLine("------------------------------------------------------");
+            var mostPopularProduct =
+                (from od in orderDetails
+                 group od by od.ProductId into g
+                 join p in products on g.Key equals p.ProductId
+                 select new
+                 {
+                     ProductName = p.ProductName,
+                     TimesOrdered = g.Count()
+                 })
+                .OrderByDescending(x => x.TimesOrdered)
+                .First();
+
+            Console.WriteLine($"{mostPopularProduct.ProductName} - ordered {mostPopularProduct.TimesOrdered} time(s)");
+
+            Console.WriteLine("\nDone.");
+        }
+    }
+}
