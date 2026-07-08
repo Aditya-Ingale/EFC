@@ -1,0 +1,479 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public class Student
+{
+    private int rollNo;
+    private string name;
+    private short marks;
+
+    public int RollNo
+    {
+        get => rollNo;
+        set => rollNo = value > 0 ? value : throw new Exception("RollNo must be greater than 0");
+    }
+
+    public string Name
+    {
+        get => name;
+        set => name = !string.IsNullOrWhiteSpace(value) ? value : throw new Exception("Name cannot be blank");
+    }
+
+    public short Marks
+    {
+        get => marks;
+        set => marks = (value >= 0 && value <= 100) ? value : throw new Exception("Marks must be between 0 and 100");
+    }
+
+    public Student() { }
+    public Student(int rollNo) { RollNo = rollNo; }
+    public Student(int rollNo, string name) { RollNo = rollNo; Name = name; }
+    public Student(int rollNo, string name, short marks) { RollNo = rollNo; Name = name; Marks = marks; }
+
+    public override string ToString() => $"RollNo - {RollNo} Name - {Name} Marks - {Marks}";
+}
+
+class Program
+{
+    static void Main()
+    {
+        List<Student> students = new List<Student>();
+
+        for (int i = 1; i <= 10; i++)
+        {
+            try
+            {
+                Console.WriteLine($"Enter details for student {i}:");
+                Console.Write("RollNo: ");
+                int rollNo = int.Parse(Console.ReadLine());
+                Console.Write("Name: ");
+                string name = Console.ReadLine();
+                Console.Write("Marks: ");
+                short marks = short.Parse(Console.ReadLine());
+
+                students.Add(new Student(rollNo, name, marks));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error: " + ex.Message + " (re-enter this student)");
+                i--;
+            }
+        }
+
+        Console.WriteLine("\n-- Sorted by Marks (highest first) --");
+        foreach (var s in students.OrderByDescending(s => s.Marks))
+            Console.WriteLine(s);
+
+        Console.WriteLine("\n-- Passed students (Marks >= 40) --");
+        foreach (var s in students.Where(s => s.Marks >= 40))
+            Console.WriteLine(s);
+    }
+}
+
+
+
+
+-----------------------------------------------------------------------------------------------
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public class Student
+{
+    private int rollNo;
+    private string name;
+    private short marks;
+
+    public int RollNo
+    {
+        get => rollNo;
+        set => rollNo = value > 0 ? value : throw new Exception("RollNo must be greater than 0");
+    }
+
+    public string Name
+    {
+        get => name;
+        set => name = !string.IsNullOrWhiteSpace(value) ? value : throw new Exception("Name cannot be blank");
+    }
+
+    public short Marks
+    {
+        get => marks;
+        set => marks = (value >= 0 && value <= 100) ? value : throw new Exception("Marks must be between 0 and 100");
+    }
+
+    public Student() { }
+    public Student(int rollNo) { RollNo = rollNo; }
+    public Student(int rollNo, string name) { RollNo = rollNo; Name = name; }
+    public Student(int rollNo, string name, short marks) { RollNo = rollNo; Name = name; Marks = marks; }
+
+    public override string ToString() => $"RollNo - {RollNo} Name - {Name} Marks - {Marks}";
+}
+
+class Program
+{
+    static void Main()
+    {
+        List<Student> students = new List<Student>();
+
+        for (int i = 1; i <= 10; i++)
+        {
+            try
+            {
+                Console.WriteLine($"Enter details for student {i}:");
+                Console.Write("RollNo: ");
+                int rollNo = int.Parse(Console.ReadLine());
+                Console.Write("Name: ");
+                string name = Console.ReadLine();
+                Console.Write("Marks: ");
+                short marks = short.Parse(Console.ReadLine());
+
+                students.Add(new Student(rollNo, name, marks));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error: " + ex.Message + " (re-enter this student)");
+                i--;
+            }
+        }
+
+        Console.WriteLine("\n-- Sorted by Marks (highest first) --");
+        foreach (var s in students.OrderByDescending(s => s.Marks))
+            Console.WriteLine(s);
+
+        Console.WriteLine("\n-- Passed students (Marks >= 40) --");
+        foreach (var s in students.Where(s => s.Marks >= 40))
+            Console.WriteLine(s);
+    }
+}
+
+
+// ===================== Models/Product.cs =====================
+using System.ComponentModel.DataAnnotations;
+
+namespace Exam1Mvc.Models
+{
+    public class Product
+    {
+        [Required(ErrorMessage = "Id is required")]
+        public int Id { get; set; }
+
+        [Required(ErrorMessage = "Name is required")]
+        [StringLength(50, ErrorMessage = "Name cannot exceed 50 characters")]
+        public string Name { get; set; }
+
+        [Required(ErrorMessage = "Description is required")]
+        public string Description { get; set; }
+
+        [Required(ErrorMessage = "Rate is required")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "Rate must be greater than 0")]
+        public decimal Rate { get; set; }
+
+        [Required(ErrorMessage = "Category is required")]
+        [StringLength(50, ErrorMessage = "Category cannot exceed 50 characters")]
+        public string Category { get; set; }
+    }
+}
+
+
+// ===================== Models/ProductRepository.cs =====================
+/*
+=====================================================================
+STORED PROCEDURES (run these against the Exam1 database before use)
+=====================================================================
+
+CREATE PROCEDURE sp_GetAllProducts
+AS
+BEGIN
+    SELECT Id, Name, Description, Rate, Category
+    FROM Products
+END
+GO
+
+CREATE PROCEDURE sp_InsertProduct
+    @Id INT,
+    @Name VARCHAR(50),
+    @Description VARCHAR(MAX),
+    @Rate DECIMAL(18,2),
+    @Category VARCHAR(50)
+AS
+BEGIN
+    INSERT INTO Products (Id, Name, Description, Rate, Category)
+    VALUES (@Id, @Name, @Description, @Rate, @Category)
+END
+GO
+=====================================================================
+*/
+
+using System;
+using System.Collections.Generic;
+using System.Data;
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
+
+namespace Exam1Mvc.Models
+{
+    public class ProductRepository
+    {
+        private readonly string _connectionString;
+
+        public ProductRepository(IConfiguration configuration)
+        {
+            _connectionString = configuration.GetConnectionString("Exam1ConnectionString");
+        }
+
+        public List<Product> GetAllProducts()
+        {
+            var products = new List<Product>();
+            try
+            {
+                using (SqlConnection con = new SqlConnection(_connectionString))
+                using (SqlCommand cmd = new SqlCommand("sp_GetAllProducts", con))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    con.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            products.Add(new Product
+                            {
+                                Id = Convert.ToInt32(reader["Id"]),
+                                Name = reader["Name"].ToString(),
+                                Description = reader["Description"].ToString(),
+                                Rate = Convert.ToDecimal(reader["Rate"]),
+                                Category = reader["Category"].ToString()
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error while fetching products: " + ex.Message);
+            }
+
+            return products;
+        }
+
+        public void AddProduct(Product product)
+        {
+            try
+            {
+                using (SqlConnection con = new SqlConnection(_connectionString))
+                using (SqlCommand cmd = new SqlCommand("sp_InsertProduct", con))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@Id", product.Id);
+                    cmd.Parameters.AddWithValue("@Name", product.Name);
+                    cmd.Parameters.AddWithValue("@Description", product.Description);
+                    cmd.Parameters.AddWithValue("@Rate", product.Rate);
+                    cmd.Parameters.AddWithValue("@Category", product.Category);
+
+                    con.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error while adding product: " + ex.Message);
+            }
+        }
+    }
+}
+
+
+// ===================== Controllers/ProductsController.cs =====================
+using System;
+using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc;
+using Exam1Mvc.Models;
+
+namespace Exam1Mvc.Controllers
+{
+    public class ProductsController : Controller
+    {
+        private readonly ProductRepository _repository;
+
+        public ProductsController(ProductRepository repository)
+        {
+            _repository = repository;
+        }
+
+        // GET: Products
+        public IActionResult Index()
+        {
+            List<Product> products = new List<Product>();
+            try
+            {
+                products = _repository.GetAllProducts();
+            }
+            catch (Exception ex)
+            {
+                ViewBag.ErrorMessage = ex.Message;
+            }
+            return View(products);
+        }
+
+        // GET: Products/Create
+        public IActionResult Create()
+        {
+            return View();
+        }
+
+        // POST: Products/Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Create(Product product)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(product);
+            }
+
+            try
+            {
+                _repository.AddProduct(product);
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                ViewBag.ErrorMessage = ex.Message;
+                return View(product);
+            }
+        }
+    }
+}
+
+
+// ===================== Program.cs (DI registration) =====================
+/*
+builder.Services.AddScoped<Exam1Mvc.Models.ProductRepository>();
+builder.Services.AddControllersWithViews();
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Products}/{action=Index}/{id?}");
+*/
+
+
+// ===================== appsettings.json (connection string) =====================
+/*
+{
+  "ConnectionStrings": {
+    "Exam1ConnectionString": "Server=.;Database=Exam1;Trusted_Connection=True;TrustServerCertificate=True;"
+  }
+}
+*/
+
+
+// ===================== Views/Products/Index.cshtml =====================
+/*
+@model List<Exam1Mvc.Models.Product>
+
+@{
+    ViewData["Title"] = "Products";
+}
+
+<h2>Products List</h2>
+
+@if (ViewBag.ErrorMessage != null)
+{
+    <div style="color:red; font-weight:bold;">
+        Error: @ViewBag.ErrorMessage
+    </div>
+}
+
+<p>
+    <a asp-action="Create">Add New Product</a>
+</p>
+
+<table border="1" cellpadding="6" cellspacing="0">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Rate</th>
+            <th>Category</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null)
+        {
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Id</td>
+                    <td>@item.Name</td>
+                    <td>@item.Description</td>
+                    <td>@item.Rate</td>
+                    <td>@item.Category</td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+*/
+
+
+// ===================== Views/Products/Create.cshtml =====================
+/*
+@model Exam1Mvc.Models.Product
+
+@{
+    ViewData["Title"] = "Add Product";
+}
+
+<h2>Add New Product</h2>
+
+@if (ViewBag.ErrorMessage != null)
+{
+    <div style="color:red; font-weight:bold;">
+        Error: @ViewBag.ErrorMessage
+    </div>
+}
+
+<form asp-action="Create" method="post">
+    <div asp-validation-summary="All" style="color:red;"></div>
+
+    <div>
+        <label>Id</label><br />
+        <input asp-for="Id" />
+        <span asp-validation-for="Id" style="color:red;"></span>
+    </div>
+    <br />
+    <div>
+        <label>Name</label><br />
+        <input asp-for="Name" />
+        <span asp-validation-for="Name" style="color:red;"></span>
+    </div>
+    <br />
+    <div>
+        <label>Description</label><br />
+        <textarea asp-for="Description"></textarea>
+        <span asp-validation-for="Description" style="color:red;"></span>
+    </div>
+    <br />
+    <div>
+        <label>Rate</label><br />
+        <input asp-for="Rate" />
+        <span asp-validation-for="Rate" style="color:red;"></span>
+    </div>
+    <br />
+    <div>
+        <label>Category</label><br />
+        <input asp-for="Category" />
+        <span asp-validation-for="Category" style="color:red;"></span>
+    </div>
+    <br />
+    <button type="submit">Save</button>
+    <a asp-action="Index">Back to List</a>
+</form>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}
+*/
