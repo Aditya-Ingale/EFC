@@ -1,0 +1,148 @@
+Binary Tree Traversal
+
+import java.util.Scanner;
+import java.util.LinkedList;
+import java.util.Queue;
+
+public class BinaryTreeTraversal {
+    Node root;
+
+    static class Node {
+        int data;
+        Node left, right;
+        Node(int data) { this.data = data; }
+    }
+
+    // Insert (BST style: smaller left, larger right)
+    void insert(int data) {
+        root = insertRec(root, data);
+    }
+
+    Node insertRec(Node root, int data) {
+        if (root == null) {
+            root = new Node(data);
+            return root;
+        }
+        if (data < root.data) root.left = insertRec(root.left, data);
+        else if (data > root.data) root.right = insertRec(root.right, data);
+        return root;
+    }
+
+    // Preorder: Root -> Left -> Right
+    void preorder(Node node) {
+        if (node == null) return;
+        System.out.print(node.data + " ");
+        preorder(node.left);
+        preorder(node.right);
+    }
+
+    // Inorder: Left -> Root -> Right (gives sorted order for BST)
+    void inorder(Node node) {
+        if (node == null) return;
+        inorder(node.left);
+        System.out.print(node.data + " ");
+        inorder(node.right);
+    }
+
+    // Postorder: Left -> Right -> Root
+    void postorder(Node node) {
+        if (node == null) return;
+        postorder(node.left);
+        postorder(node.right);
+        System.out.print(node.data + " ");
+    }
+
+    // Level order (BFS) using a queue
+    void levelOrder() {
+        if (root == null) {
+            System.out.println("Tree is empty");
+            return;
+        }
+        Queue<Node> queue = new LinkedList<>();
+        queue.add(root);
+        while (!queue.isEmpty()) {
+            Node curr = queue.poll();
+            System.out.print(curr.data + " ");
+            if (curr.left != null) queue.add(curr.left);
+            if (curr.right != null) queue.add(curr.right);
+        }
+        System.out.println();
+    }
+
+    // Search
+    boolean search(Node node, int key) {
+        if (node == null) return false;
+        if (node.data == key) return true;
+        return key < node.data ? search(node.left, key) : search(node.right, key);
+    }
+
+    // Height of tree
+    int height(Node node) {
+        if (node == null) return -1; // use 0 if you count height as number of nodes
+        return 1 + Math.max(height(node.left), height(node.right));
+    }
+
+    // Count total nodes
+    int countNodes(Node node) {
+        if (node == null) return 0;
+        return 1 + countNodes(node.left) + countNodes(node.right);
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        BinaryTreeTraversal tree = new BinaryTreeTraversal();
+        int choice;
+
+        do {
+            System.out.println("\n1. Insert\n2. Preorder Traversal\n3. Inorder Traversal" +
+                    "\n4. Postorder Traversal\n5. Level Order Traversal\n6. Search" +
+                    "\n7. Height of Tree\n8. Count Nodes\n9. Exit");
+            System.out.print("Enter choice: ");
+            choice = sc.nextInt();
+
+            switch (choice) {
+                case 1:
+                    System.out.print("Enter value: ");
+                    tree.insert(sc.nextInt());
+                    break;
+                case 2:
+                    System.out.print("Preorder: ");
+                    tree.preorder(tree.root);
+                    System.out.println();
+                    break;
+                case 3:
+                    System.out.print("Inorder: ");
+                    tree.inorder(tree.root);
+                    System.out.println();
+                    break;
+                case 4:
+                    System.out.print("Postorder: ");
+                    tree.postorder(tree.root);
+                    System.out.println();
+                    break;
+                case 5:
+                    System.out.print("Level Order: ");
+                    tree.levelOrder();
+                    break;
+                case 6:
+                    System.out.print("Enter value to search: ");
+                    int key = sc.nextInt();
+                    System.out.println(tree.search(tree.root, key) ? "Found" : "Not Found");
+                    break;
+                case 7:
+                    System.out.println("Height of tree: " + tree.height(tree.root));
+                    break;
+                case 8:
+                    System.out.println("Total nodes: " + tree.countNodes(tree.root));
+                    break;
+                case 9:
+                    System.out.println("Exiting...");
+                    break;
+                default:
+                    System.out.println("Invalid choice");
+            }
+        } while (choice != 9);
+
+        sc.close();
+    }
+}
