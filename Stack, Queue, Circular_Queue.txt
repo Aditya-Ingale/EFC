@@ -286,3 +286,107 @@ public class CircularQueueDemo {
         sc.close();
     }
 }
+
+========================================================================================================
+
+PriorityQueue
+
+import java.util.Scanner;
+
+public class PriorityQueueDemo {
+    int[] arr;
+    int size;
+    int capacity;
+
+    PriorityQueueDemo(int capacity) {
+        this.capacity = capacity;
+        arr = new int[capacity];
+        size = 0;
+    }
+
+    // Insert element in sorted position (ascending order = min value has highest priority)
+    void insert(int data) {
+        if (size == capacity) {
+            System.out.println("Priority Queue Overflow");
+            return;
+        }
+        int i = size - 1;
+        // Shift elements greater than data to the right
+        while (i >= 0 && arr[i] > data) {
+            arr[i + 1] = arr[i];
+            i--;
+        }
+        arr[i + 1] = data;
+        size++;
+        System.out.println(data + " inserted into priority queue");
+    }
+
+    // Remove and return the highest priority element (smallest value, at front)
+    void remove() {
+        if (size == 0) {
+            System.out.println("Priority Queue Underflow");
+            return;
+        }
+        System.out.println("Removed highest priority element: " + arr[0]);
+        for (int i = 0; i < size - 1; i++) {
+            arr[i] = arr[i + 1];
+        }
+        size--;
+    }
+
+    // Peek at highest priority element without removing
+    void peek() {
+        if (size == 0) {
+            System.out.println("Priority Queue is empty");
+            return;
+        }
+        System.out.println("Highest priority element: " + arr[0]);
+    }
+
+    void display() {
+        if (size == 0) {
+            System.out.println("Priority Queue is empty");
+            return;
+        }
+        System.out.print("Priority Queue (highest to lowest priority): ");
+        for (int i = 0; i < size; i++) System.out.print(arr[i] + " ");
+        System.out.println();
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        System.out.print("Enter priority queue capacity: ");
+        int capacity = sc.nextInt();
+        PriorityQueueDemo pq = new PriorityQueueDemo(capacity);
+        int choice;
+
+        do {
+            System.out.println("\n1. Insert\n2. Remove (highest priority)\n3. Peek\n4. Display\n5. Exit");
+            System.out.print("Enter choice: ");
+            choice = sc.nextInt();
+
+            switch (choice) {
+                case 1:
+                    System.out.print("Enter value: ");
+                    pq.insert(sc.nextInt());
+                    break;
+                case 2:
+                    pq.remove();
+                    break;
+                case 3:
+                    pq.peek();
+                    break;
+                case 4:
+                    pq.display();
+                    break;
+                case 5:
+                    System.out.println("Exiting...");
+                    break;
+                default:
+                    System.out.println("Invalid choice");
+            }
+        } while (choice != 5);
+
+        sc.close();
+    }
+}
