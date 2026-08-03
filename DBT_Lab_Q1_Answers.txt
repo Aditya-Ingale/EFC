@@ -1,0 +1,220 @@
+====================================================================
+DATABASE TECHNOLOGIES LAB TEST - ANSWER SHEET
+Module: Supermarket Store System (Like DMart)
+====================================================================
+
+####################################################################
+PART A: MySQL (35 Marks)
+####################################################################
+
+-- --------------------------------------------------------------
+-- Q1. Create minimum 3 tables without any Key constraints (6)
+-- --------------------------------------------------------------
+
+CREATE TABLE Category (
+    category_id INT,
+    category_name VARCHAR(50)
+);
+
+CREATE TABLE Products (
+    product_id INT,
+    product_name VARCHAR(100),
+    price DECIMAL(10,2),
+    stock_qty INT,
+    category_id INT
+);
+
+CREATE TABLE Sales (
+    sale_id INT,
+    product_id INT,
+    quantity INT,
+    sale_date DATE
+);
+
+-- --------------------------------------------------------------
+-- Q2. Add Primary Key to each table (3)
+-- --------------------------------------------------------------
+
+ALTER TABLE Category
+    ADD PRIMARY KEY (category_id);
+
+ALTER TABLE Products
+    ADD PRIMARY KEY (product_id);
+
+ALTER TABLE Sales
+    ADD PRIMARY KEY (sale_id);
+
+-- --------------------------------------------------------------
+-- Q3. Connect at least 2 tables using Foreign Key (2)
+-- --------------------------------------------------------------
+
+ALTER TABLE Products
+    ADD CONSTRAINT fk_products_category
+    FOREIGN KEY (category_id) REFERENCES Category(category_id);
+
+ALTER TABLE Sales
+    ADD CONSTRAINT fk_sales_product
+    FOREIGN KEY (product_id) REFERENCES Products(product_id);
+
+-- --------------------------------------------------------------
+-- Q4. Insert minimum 3 records in each table (3)
+-- --------------------------------------------------------------
+
+INSERT INTO Category (category_id, category_name) VALUES
+(1, 'Grocery'),
+(2, 'Dairy'),
+(3, 'Bakery');
+
+INSERT INTO Products (product_id, product_name, price, stock_qty, category_id) VALUES
+(101, 'Basmati Rice 5kg', 450.00, 50, 1),
+(102, 'Amul Milk 1L', 60.00, 100, 2),
+(103, 'Brown Bread', 45.00, 30, 3);
+
+INSERT INTO Sales (sale_id, product_id, quantity, sale_date) VALUES
+(1, 101, 2, '2026-07-01'),
+(2, 102, 5, '2026-07-02'),
+(3, 103, 1, '2026-07-03');
+
+-- --------------------------------------------------------------
+-- Q5. Sort the result based on product name (2)
+-- --------------------------------------------------------------
+
+SELECT * FROM Products
+ORDER BY product_name ASC;
+
+-- --------------------------------------------------------------
+-- Q6. Use of WHERE with OR clause (2)
+-- --------------------------------------------------------------
+
+SELECT * FROM Products
+WHERE category_id = 1 OR category_id = 2;
+
+-- --------------------------------------------------------------
+-- Q7. Show first five records from any one table (1)
+-- --------------------------------------------------------------
+
+SELECT * FROM Products
+LIMIT 5;
+
+-- --------------------------------------------------------------
+-- Q8. Use of 'BETWEEN' keyword (2)
+-- --------------------------------------------------------------
+
+SELECT * FROM Products
+WHERE price BETWEEN 40 AND 500;
+
+-- --------------------------------------------------------------
+-- Q9. Logical use of GROUP BY clause (3)
+-- --------------------------------------------------------------
+
+SELECT category_id, COUNT(*) AS total_products, SUM(stock_qty) AS total_stock
+FROM Products
+GROUP BY category_id;
+
+-- --------------------------------------------------------------
+-- Q10. Use of LEFT JOIN (3)
+-- --------------------------------------------------------------
+
+SELECT Products.product_name, Sales.quantity, Sales.sale_date
+FROM Products
+LEFT JOIN Sales ON Products.product_id = Sales.product_id;
+
+-- --------------------------------------------------------------
+-- Q11. Create a temporary table and remove it permanently (2)
+-- --------------------------------------------------------------
+
+CREATE TEMPORARY TABLE Temp_Products AS
+SELECT * FROM Products WHERE stock_qty > 20;
+
+SELECT * FROM Temp_Products;
+
+DROP TEMPORARY TABLE Temp_Products;
+
+-- --------------------------------------------------------------
+-- Q12. Procedure with one INPUT and one OUTPUT parameter (3)
+-- --------------------------------------------------------------
+
+DELIMITER //
+
+CREATE PROCEDURE GetStockByProduct(
+    IN p_product_id INT,
+    OUT p_stock INT
+)
+BEGIN
+    SELECT stock_qty INTO p_stock
+    FROM Products
+    WHERE product_id = p_product_id;
+END //
+
+DELIMITER ;
+
+-- To call the procedure:
+CALL GetStockByProduct(101, @stock);
+SELECT @stock;
+
+-- --------------------------------------------------------------
+-- Q13. Trigger of BEFORE UPDATE on any one table (3)
+-- --------------------------------------------------------------
+
+DELIMITER //
+
+CREATE TRIGGER before_product_update
+BEFORE UPDATE ON Products
+FOR EACH ROW
+BEGIN
+    IF NEW.stock_qty < 0 THEN
+        SET NEW.stock_qty = 0;
+    END IF;
+END //
+
+DELIMITER ;
+
+
+####################################################################
+PART B: MongoDB (5 Marks)
+####################################################################
+
+-- --------------------------------------------------------------
+-- Q1. Command for creating collection & inserting documents (1)
+-- --------------------------------------------------------------
+
+db.createCollection("products")
+
+db.products.insertMany([
+    { product_id: 101, product_name: "Basmati Rice 5kg", price: 450, category: "Grocery", stock_qty: 50 },
+    { product_id: 102, product_name: "Amul Milk 1L", price: 60, category: "Dairy", stock_qty: 100 },
+    { product_id: 103, product_name: "Brown Bread", price: 45, category: "Bakery", stock_qty: 30 }
+])
+
+-- --------------------------------------------------------------
+-- Q2. Command to list all from the result (1)
+-- --------------------------------------------------------------
+
+db.products.find()
+
+-- --------------------------------------------------------------
+-- Q3. Use $and operator (cost > 100 AND category = 'Grocery') (1)
+-- --------------------------------------------------------------
+
+db.products.find({
+    $and: [
+        { price: { $gt: 100 } },
+        { category: "Grocery" }
+    ]
+})
+
+-- --------------------------------------------------------------
+-- Q4. Sort result in descending order based on Product cost (1)
+-- --------------------------------------------------------------
+
+db.products.find().sort({ price: -1 })
+
+-- --------------------------------------------------------------
+-- Q5. Create an index on the name (of product) field (1)
+-- --------------------------------------------------------------
+
+db.products.createIndex({ product_name: 1 })
+
+====================================================================
+END OF ANSWER SHEET
+====================================================================
