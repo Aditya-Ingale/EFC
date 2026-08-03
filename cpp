@@ -1,3 +1,5 @@
+C++ Program to Append a String in an Existing File?
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -34,6 +36,8 @@ int main() {
 
 =================================================
 
+Write a program for adding members of two different classes using the friend function?
+
 #include <iostream>
 using namespace std;
 
@@ -66,6 +70,8 @@ int main() {
 }
 
 =================================================
+
+Write a C++ program to implement a class called BankAccount that has private member variables for account number and balance. Include member functions to deposit and withdraw money from the account.
 
 #include <iostream>
 using namespace std;
@@ -123,6 +129,8 @@ int main() {
 
 =================================================
 
+Write a C++ program to sort a vector of strings using the sort algorithm. Use std::sort algorithm/function to sort the vector of 10 strings. First, create an empty vector, the or, then input the 10 strings one by one from user in a for loop and push/append the strings into the vector. Finally sort the vector of strings. Print the vector of string before and after the std::sort().
+
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -156,6 +164,8 @@ int main() {
 }
 
 =========÷=======================================
+
+Write a C++ program to design a class template Matrix<T> that supports addition and multiplication of matrices of any data type (int, float). Demonstrate with both int and float matrices.
 
 #include <iostream>
 #include <vector>
@@ -235,6 +245,8 @@ int main() {
 }
 
 =================================================
+
+Write a C++ program to sort a vector of 10 doubles in descending order(largest to smallest). Use a functor or lambda function for sorting in descending order. Create a vector of 10 doubles first, then further sort in descending order.
 
 #include <iostream>
 #include <vector>
